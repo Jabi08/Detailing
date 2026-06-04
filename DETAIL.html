@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corbridge Tablet Detailing Dashboard</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --corbridge-blue: #0284c7;
+            --cardio-red: #e11d48;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --sidebar-width: 290px; /* Slightly wider sidebar for readability */
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* SIDEBAR STYLES */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .sidebar-header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-header p {
+            margin: 6px 0 0 0;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 15px 0;
+            margin: 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .sidebar-item {
+            padding: 18px 24px; /* Larger tap target for sidebar */
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border-left: 5px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-item:active, .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--corbridge-blue);
+            color: white;
+        }
+
+        .sidebar-item.highlight {
+            border-left-color: var(--cardio-red);
+        }
+
+        /* MAIN CONTENT STYLES */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 20px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        #searchBar {
+            width: 100%;
+            padding: 14px 22px;
+            font-size: 16px;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        #searchBar:focus {
+            border-color: var(--corbridge-blue);
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .specialist-section {
+            margin-bottom: 45px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* INCREASED DRUG BOX SIZE & FLUSH GRID */
+        .drug-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); /* Larger minimum width per card */
+            gap: 20px; /* Wider spacing between cards */
+        }
+
+        .drug-box {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px; /* Bigger internal spacing */
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .drug-box:active {
+            background: #e0f2fe;
+            border-color: var(--corbridge-blue);
+            transform: scale(0.97);
+        }
+
+        .brand-name {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 19px; /* Bigger font size for the brand */
+            margin-bottom: 10px;
+            display: block;
+            letter-spacing: 0.3px;
+        }
+
+        .indications {
+            font-size: 14px; /* Enhanced readability for description */
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* MODAL / POPUP STYLES */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 20px;
+            width: 94%;
+            max-width: 850px; /* Made the image popup area slightly wider too */
+            text-align: center;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            font-size: 40px;
+            font-weight: bold;
+            color: #64748b;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .modal-img-placeholder {
+            width: 100%;
+            height: auto;
+            max-height: 75vh;
+            background: #f1f5f9;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .modal-img-placeholder img {
+            max-width: 100%;
+            max-height: 75vh;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR LEFT -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>Corbridge Detailing</h1>
+            <p>Tablet Assistant Panel</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item highlight active" onclick="scrollToSection('cardio-sec', this)">Cardiology</li>
+            <li class="sidebar-item" onclick="scrollToSection('gp-sec', this)">GP, Family Med & IM</li>
+            <li class="sidebar-item highlight" onclick="scrollToSection('nephro-sec', this)">Nephrology</li>
+            <li class="sidebar-item" onclick="scrollToSection('neuro-sec', this)">Neurology</li>
+            <li class="sidebar-item" onclick="scrollToSection('diab-sec', this)">Diabetology & Endo</li>
+            <li class="sidebar-item" onclick="scrollToSection('surg-sec', this)">Surgery, Ortho & Gastro</li>
+        </ul>
+    </div>
+
+    <!-- MAIN CONTENT RIGHT -->
+    <div class="main-content">
+        <div class="top-bar">
+            <input type="text" id="searchBar" onkeyup="filterDashboard()" placeholder="Type to search for a drug or therapeutic indication...">
+        </div>
+
+        <div class="content-area" id="contentArea">
+
+            <!-- CARDIOLOGY SECTION -->
+            <div class="specialist-section" id="cardio-sec">
+                <div class="section-title" style="color: var(--cardio-red);">Cardiology</div>
+                <div class="drug-grid">
+                    <div class="drug-box" onclick="openVisual('Trimidine.jpeg', 'TRIMEDIN / TRI-PLUS')">
+                        <span class="brand-name">TRIMEDIN / TRI-PLUS</span>
+                        <div class="indications">Anti-angina. Relieves chest pain and discomfort. (Trimedin: ₱15.12 / Tri-plus: ₱24.00)</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Tukon.jpeg', 'TUKON')">
+                        <span class="brand-name">TUKON</span>
+                        <div class="indications">Two conditions, one solution. CCB + Lipid Modifying Agent for comprehensive cardiovascular risk management.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Valdon.jpeg', 'VALDON / VALDORIN')">
+                        <span class="brand-name">VALDON / VALDORIN</span>
+                        <div class="indications">Antithrombotic. Promotes sustained blood circulation and reduces the risk of blood clots. (Valdon: ₱15.00 / Valdorin: ₱25.00)</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Cardea.jpeg', 'CARDEA')">
+                        <span class="brand-name">CARDEA</span>
+                        <div class="indications">Single-pill combination for targeted Hypertension management. (₱12.00/Tablet)</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Telmirin.jpeg', 'TELMIRIN / TELMIRIN PLUS')">
+                        <span class="brand-name">TELMIRIN / Plus</span>
+                        <div class="indications">24/7 Hypertension management and proven cardiovascular protection.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Gavrila.jpeg', 'GAVRILA')">
+                        <span class="brand-name">GAVRILA</span>
+                        <div class="indications">Pure heart rate lowering agent indicated for Heart Failure and Chronic Stable Angina.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Ticalor.jpeg', 'TICALOR')">
+                        <span class="brand-name">TICALOR</span>
+                        <div class="indications">Potent antithrombotic agent for Acute Coronary Syndrome management.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Spire.jpeg', 'SPIRE')">
+                        <span class="brand-name">SPIRE</span>
+                        <div class="indications">Potassium-sparing diuretic vital for managing severe Heart Failure.</div>
+                    </div>
+ <div class="drug-grid">
+                    <div class="drug-box" onclick="openVisual('Zarnat.jpeg', 'ZARNAT / ZARNAT PLUS')">
+                        <span class="brand-name">ZARNAT / PLUS</span>
+                        <div class="indications">Initial treatment for low-risk hypertension. Viable long-term management for frail elderly patients.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GP, FAMILY MEDICINE & IM -->
+            <div class="specialist-section" id="gp-sec">
+                <div class="section-title">GP, Family Med & Internal Medicine</div>
+                <div class="drug-grid">
+                    <div class="drug-box" onclick="openVisual('Zarnat.jpeg', 'ZARNAT / ZARNAT PLUS')">
+                        <span class="brand-name">ZARNAT / PLUS</span>
+                        <div class="indications">Initial treatment for low-risk hypertension. Viable long-term management for frail elderly patients.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Valugan.jpeg', 'VALUGAN')">
+                        <span class="brand-name">VALUGAN</span>
+                        <div class="indications">Antihypertensive combination built on robust clinical evidence. Ideal for patients with multiple risk factors.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Corpulax.jpeg', 'CORPULAX')">
+                        <span class="brand-name">CORPULAX</span>
+                        <div class="indications">Baseline Calcium Channel Blocker for standard Hypertension & Chronic Stable Angina.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Forcad.jpeg', 'FORCAD')">
+                        <span class="brand-name">FORCAD</span>
+                        <div class="indications">Cost-effective statin therapy for reliable Coronary Artery Disease risk reduction.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Telmirin.jpeg', 'TELMIRIN / TELMIRIN PLUS')">
+                        <span class="brand-name">TELMIRIN / Plus</span>
+                        <div class="indications">Versatile primary care management option for a broad range of hypertensive profiles.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEPHROLOGY -->
+            <div class="specialist-section" id="nephro-sec">
+                <div class="section-title" style="color: var(--cardio-red);">Nephrology</div>
+                <div class="drug-grid">
+                    <div class="drug-box" onclick="openVisual('Ibetan.jpeg', 'IBETAN')">
+                        <span class="brand-name">IBETAN</span>
+                        <div class="indications">Delivers lasting renoprotection against progressive, long-term kidney damage.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Telmirin.jpeg', 'TELMIRIN')">
+                        <span class="brand-name">TELMIRIN</span>
+                        <div class="indications">Excellent renoprotective profile tailored for hypertensive patients with underlying renal risks.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Spire.jpeg', 'SPIRE')">
+                        <span class="brand-name">SPIRE</span>
+                        <div class="indications">Effective volume management and fluid regulation in cases of renal impairment.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEUROLOGY -->
+            <div class="specialist-section" id="neuro-sec">
+                <div class="section-title">Neurology</div>
+                <div class="drug-grid">
+                    <div class="drug-box" onclick="openVisual('Urania.jpeg', 'URANIA')">
+                        <span class="brand-name">URANIA</span>
+                        <div class="indications">Antithrombotic Agent (Direct Factor Xa Inhibitor). Lowers the high risk of stroke & systemic embolism.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Karisa.jpeg', 'KARISA')">
+                        <span class="brand-name">KARISA</span>
+                        <div class="indications">Direct Thrombin Inhibitor for reliable stroke prevention in patients presenting with Atrial Fibrillation.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Ticalor.jpeg', 'TICALOR')">
+                        <span class="brand-name">TICALOR</span>
+                        <div class="indications">Secondary prevention against recurrent stroke and severe atherosclerotic ischemic events.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Valdon.jpeg', 'VALDON / VALDORIN')">
+                        <span class="brand-name">VALDON / VALDORIN</span>
+                        <div class="indications">Essential antiplatelet therapy for stroke survivors and Transient Ischemic Attack (TIA) profiles.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIABETOLOGY & ENDOCRINOLOGY -->
+            <div class="specialist-section" id="diab-sec">
+                <div class="section-title">Diabetology & Endocrinology</div>
+                <div class="drug-grid">
+                    <div class="drug-box" onclick="openVisual('Tomexia.jpeg', 'TOMEXIA')">
+                        <span class="brand-name">TOMEXIA</span>
+                        <div class="indications">Significantly lowers severe Hypertriglyceridemia (HTG) and Non-HDL cholesterol in diabetic patients.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Ibetan.jpeg', 'IBETAN')">
+                        <span class="brand-name">IBETAN</span>
+                        <div class="indications">Gold standard, mainstay treatment option for delaying the onset of Diabetic Nephropathy.</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Tukon.jpeg', 'TUKON')">
+                        <span class="brand-name">TUKON</span>
+                        <div class="indications">Indicated for high-risk diabetic patients requiring tight, simultaneous lipid and blood pressure control.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SURGERY, ORTHO & GASTRO -->
+            <div class="specialist-section" id="surg-sec">
+                <div class="section-title">Surgery, Orthopedics & Gastroenterology</div>
+                <div class="drug-grid">
+                    <div class="drug-box" onclick="openVisual('Venoright.jpeg', 'VENORIGHT')">
+                        <span class="brand-name">VENORIGHT</span>
+                        <div class="indications">For Hemorrhoids. Targets and reduces underlying inflammation, pain, and localized swelling. (₱39.00)</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Venorightforte.jpeg', 'VENORIGHT FORTE')">
+                        <span class="brand-name">VENORIGHT FORTE</span>
+                        <div class="indications">For Chronic Venous Insufficiency. Improves venous tone and micro-blood circulation. (₱49.75)</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Spire.jpeg', 'SPIRE')">
+                        <span class="brand-name">SPIRE</span>
+                        <div class="indications">Primary drug of choice for treating Ascites secondary to Liver Cirrhosis (Gastroenterology).</div>
+                    </div>
+                    <div class="drug-box" onclick="openVisual('Karisa.jpeg', 'KARISA')">
+                        <span class="brand-name">KARISA</span>
+                        <div class="indications">Indicated for Venous Thromboembolism (VTE) prevention post-major orthopedic surgeries (total hip/knee replacements).</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- POPUP VIEW FOR VISUAL REFERENCES -->
+    <div id="visualModal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="document.getElementById('visualModal').style.display='none'">&times;</span>
+            <h2 id="modalTitle" style="margin-top: 0; color: #1e3a8a; font-size: 22px;"></h2>
+            <div class="modal-img-placeholder">
+                <img id="targetImg" src="" alt="Flyer Reference">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function scrollToSection(sectionId, element) {
+            var target = document.getElementById(sectionId);
+            if(target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            
+            var items = document.getElementsByClassName('sidebar-item');
+            for (var i = 0; i < items.length; i++) {
+                items[i].classList.remove('active');
+            }
+            element.classList.add('active');
+        }
+
+        function openVisual(filename, productTitle) {
+            document.getElementById('modalTitle').innerText = productTitle;
+            var fullPath = 'CARDIO/' + filename;
+            document.getElementById('targetImg').src = fullPath;
+            document.getElementById('visualModal').style.display = 'flex';
+        }
+
+        function closeModal(e) {
+            document.getElementById('visualModal').style.display = 'none';
+        }
+
+        function filterDashboard() {
+            var input, filter, boxes, txtValue, i;
+            input = document.getElementById('searchBar');
+            filter = input.value.toUpperCase();
+            boxes = document.getElementsByClassName('drug-box');
+
+            for (i = 0; i < boxes.length; i++) {
+                txtValue = boxes[i].textContent || boxes[i].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    boxes[i].style.display = "";
+                } else {
+                    boxes[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
